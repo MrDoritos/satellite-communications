@@ -25,11 +25,25 @@
 
 #if defined(__AVR_ATmega328P__)
 #include "Arduino.h"
+#else
+#include <iostream>
+#include <climits>
+#include <unistd.h>
+#include <sys/ioctl.h>
 #endif
+
+#define ifarduino if defined(__AVR_ATmega328P__)
 
 class serialClient {
 public:
+#if defined(__AVR_ATmega328P__)
 serialClient() {}
+#else
+serialClient(int fd) {
+this->fd = fd;
+}
+int fd;
+#endif
 virtual void onRotateHome() {}
 virtual void onRotated() {}
 virtual void onRollEdge() {}
@@ -53,7 +67,9 @@ uint8_t* buf;
 buf = (uint8_t*)&data;
 Serial.write(buf, 2);
 #else
-
+void* buf;
+buf = (void*)&data;
+write(fd, buf, 2);
 #endif
 return NO_ERROR;
 }
@@ -69,6 +85,12 @@ data[0] = Serial.read();
 data[1] = Serial.read();
 return ((data[0] << 8) | data[1]);
 #else
+if (!isPacketReady())
+	return EOF;
+char data[2];
+read(fd, &data, 2);
+//stream->read(&data[0], 2);
+return ((short(data[0]) << 8) | short(data[1]));
 #endif
 }
 virtual bool onRecieve(short data) {
@@ -81,6 +103,14 @@ bool isPacketReady() {
 #if defined(__AVR__ATmega328P__)
 return (Serial.available() > 1);
 #else
+bool gn;
+//stream->seekg(0, stream->end);
+size_t length;
+ioctl(fd, FIONREAD, &length);
+gn = (length > 1);
+if (length < 0) return gn;
+//stream->seekg(0, stream->beg);
+return gn;
 #endif
 }
 void flush() {
@@ -88,6 +118,8 @@ void flush() {
 while (Serial.available())
         Serial.read();
 #else
+//stream->clear();
+//stream->ignore(INT_MAX);
 #endif
 }
 
