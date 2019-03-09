@@ -14,6 +14,8 @@
 #define RESET 0x001C
 #define ROLL_PULLDOWN 0x001D
 #define ROTATE_PULLDOWN 0x001F
+#define DEBUG_MSG 0x0020
+#define DEBUG_2 0x0021
 
 //Error types
 #define IsError(xxx) ((xxx & ERRMASK) > 0)
@@ -68,8 +70,8 @@ uint8_t* buf;
 buf = (uint8_t*)&data;
 Serial.write(buf, 2);
 #else
-void* buf;
-buf = (void*)&data;
+char* buf;
+buf = (char*)&data;
 write(fd, buf, 2);
 #endif
 return NO_ERROR;
@@ -92,8 +94,8 @@ if (!Serial)
 if (!isPacketReady())
 	return EOF;
 short data[2];
-data[1] = Serial.read();
 data[0] = Serial.read();
+data[1] = Serial.read();
 return ((data[1] << 8) | data[0]);
 #else
 if (!isPacketReady())
