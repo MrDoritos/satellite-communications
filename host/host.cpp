@@ -9,6 +9,8 @@
 #include <sys/types.h>
 #include <fcntl.h>
 #include <libexplain/tcsetattr.h>
+#include <axisControl.h>
+
 
 using namespace std;
 

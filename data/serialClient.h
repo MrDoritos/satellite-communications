@@ -1,3 +1,4 @@
+#pragma once
 //Packet types
 #define ROTATE_HOME 0x0011
 #define ROTATED 0x0012
