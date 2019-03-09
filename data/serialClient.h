@@ -1,6 +1,7 @@
 //Packet types
 #define ROTATE_HOME 0x0011
 #define ROTATED 0x0012
+#define ROTATED_HOME 0x0012
 #define ROLL_HOME 0x0013
 #define ROLL_EDGE 0x0014
 #define ROLLED_HOME 0x0015
@@ -8,11 +9,11 @@
 #define HALT 0x0017
 #define PWR_FAIL 0x0018
 #define MTR_DISC 0x0019
-#define ROLL 0x0020
-#define ROTATE 0x0021
-#define RESET 0x0022
-#define ROLL_PULLDOWN 0x0023
-#define ROTATE_PULLDOWN 0x0024
+#define ROLL 0x001A
+#define ROTATE 0x001B
+#define RESET 0x001C
+#define ROLL_PULLDOWN 0x001D
+#define ROTATE_PULLDOWN 0x001F
 
 //Error types
 #define IsError(xxx) ((xxx & ERRMASK) > 0)
@@ -74,6 +75,16 @@ write(fd, buf, 2);
 return NO_ERROR;
 }
 
+int available() {
+#if defined(__AVR_ATmega328P__)
+return Serial.available();
+#else
+int length = 0;
+ioctl(fd, FIONREAD, &length);
+return length;
+#endif
+}
+
 short recieve() {
 #if defined(__AVR__ATmega328P__)
 if (!Serial)
@@ -81,16 +92,16 @@ if (!Serial)
 if (!isPacketReady())
 	return EOF;
 short data[2];
-data[0] = Serial.read();
 data[1] = Serial.read();
-return ((data[0] << 8) | data[1]);
+data[0] = Serial.read();
+return ((data[1] << 8) | data[0]);
 #else
 if (!isPacketReady())
 	return EOF;
 char data[2];
 read(fd, &data, 2);
 //stream->read(&data[0], 2);
-return ((short(data[0]) << 8) | short(data[1]));
+return ((short(data[1]) << 8) | short(data[0]));
 #endif
 }
 virtual bool onRecieve(short data) {
@@ -105,12 +116,17 @@ return (Serial.available() > 1);
 #else
 bool gn;
 //stream->seekg(0, stream->end);
-size_t length;
+size_t length = 0;
 ioctl(fd, FIONREAD, &length);
-gn = (length > 1);
-if (length < 0) return gn;
+if (length > 1)
+	return true;
+else
+	return false;
+
+//gn = (length > 1);
+//if (length < 0) return gn;
 //stream->seekg(0, stream->beg);
-return gn;
+//return gn;
 #endif
 }
 void flush() {
