@@ -25,5 +25,5 @@ return utils::wrap(degrees, maxDegrees);
 }
 
 double axisControl::degreesTo(double degrees) {
-return (abs(this->degrees - actualDegrees(degrees)));
+return (std::abs(this->degrees - actualDegrees(degrees)));
 }

@@ -12,7 +12,7 @@
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <fcntl.h>
-#include <libexplain/tcsetattr.h>
+//#include <libexplain/tcsetattr.h>
 #elif _WIN32
 #include <windows.h>
 
