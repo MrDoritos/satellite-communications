@@ -1,12 +1,15 @@
 //#ifdef _MSC_VER
 //#include "pch.h"
 //#endif
+#define HOST_TIMEOUT 10000
 #include "serialClient.h"
 #include <iostream>
 #include <fstream>
 //#include <iofstream>
 #include <ctime>
+#include <chrono>
 #ifdef __linux__
+#define delay(timeXs) usleep(timeXs)
 #include <unistd.h>
 #include <termios.h>
 #include <sys/ioctl.h>
@@ -14,6 +17,7 @@
 #include <fcntl.h>
 //#include <libexplain/tcsetattr.h>
 #elif _WIN32
+#define delay(timeXs) Sleep(timeXs)
 #include <windows.h>
 
 bool loop;
@@ -51,10 +55,122 @@ public:
 #elif _WIN32
 	host(HANDLE fd) :
 #endif
-		serialClient(fd) {
+		serialClient(fd), rollAxis(90), rotateAxis(360)
+    {
 
 	}
 
+    int calibrate() {
+        calibrateRotation();
+        calibrateRoll();
+    }
+    
+    //TO-DO implement anti-cable pull
+    void rotateHome() {
+        intercept(ROTATE_HOME, ROTATED_HOME);
+        /*
+        cout << "ROTATE_HOME";
+        send(ROTATE_HOME);
+        cout << "->Arduino";
+        short recv = 0x0000;        
+        short old = 0x0000;
+        //Wait for ROTATED_HOME packet
+        while (1) {
+            if (isPacketReady()) {
+                if (IsError((recv = recieve()))) {
+                    cout << "!";
+                } else if (recv == ROTATED_HOME) {
+                break;
+                }
+            }
+        //while (!(isPacketReady() && IsError(recv = recieve())) && recv != ROTATED_HOME) { 
+        if (recv != old) {
+            old = recv;
+            printf("[Recieved: 0x%04X]", recv);
+            } else {
+        cout << "-";
+            }
+        delay(50); 
+        }
+        cout << "->ROTATED_HOME" << endl;        
+        */
+    }
+    
+    void handle(short packet);
+    
+    int intercept(short pSend, short packet) {
+        printf("[Send 0x%04X, Intercepting 0x%04X]", pSend, packet);
+        send(pSend);
+        int c = 0;
+        cout << "->[Arduino]";
+        short recv = 0x0000;
+        //Wait for packet
+        while (1) {
+            if (isPacketReady()) {
+                recv = recieve();
+                //printf("[Recieved: 0x%04X]", recv);
+                if (IsError(recv)) {
+                    cout << "!";
+                    //return recv;
+                } else if (recv == packet) {
+                    break;
+                }
+            } else {
+                recv = 0x0000;
+            }                
+            if (recv != 0x0000) {
+                printf("[Recieved: 0x%04X]", recv);
+            } else {
+                //cout << "-";
+            }
+            delay(50);
+        }
+        printf("->[Recieved: 0x%04X]\r\n", packet);
+    }
+    
+    int calibrateRotation() {
+        auto tp1 = std::chrono::system_clock::now();
+        auto tp2 = std::chrono::system_clock::now();
+        
+        cout << "Begin rotation calibration" << endl;        
+        cout << "Rotating to home position" << endl;
+        intercept(ROTATE_HOME, ROTATED_HOME);
+        //rotateHome();
+        cout << "Rotating home, full 360" << endl;
+        tp1 = std::chrono::system_clock::now();
+        rotateHome();
+        tp2 = std::chrono::system_clock::now();
+        std::chrono::duration<float> elapsedTime = tp2 - tp1;
+        float elapsed = elapsedTime.count();
+        rotateAxis.setDegreesPerSecond(360 / elapsed);
+        cout << elapsed << " seconds passed, " << rotateAxis.getDegreesPerSecond() << " degrees/second" << endl;
+        rotateHome();
+        rotateAxis.setDegrees(0);
+        
+        
+    }
+    
+    int calibrateRoll() {
+        auto tp1 = std::chrono::system_clock::now();
+        auto tp2 = std::chrono::system_clock::now();
+        
+        cout << "Begin roll calibration" << endl;
+        cout << "Rolling to home position" << endl;
+        intercept(ROLL_HOME, ROLLED_HOME);
+        cout << "Rolling to edge" << endl;
+        tp1 = std::chrono::system_clock::now();
+        intercept(ROLL_EDGE, ROLLED_EDGE);
+        tp2 = std::chrono::system_clock::now();
+        std::chrono::duration<float> elapsedTime = tp2 - tp1;
+        float elapsed = elapsedTime.count();
+        rollAxis.setDegreesPerSecond(rotateAxis.getMaxDegrees() / elapsed);
+        cout << elapsed << " seconds passed, " << rollAxis.getDegreesPerSecond() << " degrees/second" << endl;
+        intercept(ROLL_HOME, ROLLED_HOME);
+        rotateAxis.setDegrees(0);
+    }
+    
+    axisControl rollAxis, rotateAxis;
+    
 	//struct axis {
 	//double degrees;
 	//} axis_rotation, axis_roll;
@@ -126,6 +242,8 @@ int main(int argc, char** argv) {
 #elif __linux__
 	while (1) {
 #endif
+sHost.calibrateRotation();
+/*
 		//printf("%i available bytes\r\n", sHost.available());
 		if (sHost.isPacketReady()) {
 			//std::cout << "Packet available" << std::endl;
@@ -140,25 +258,18 @@ int main(int argc, char** argv) {
 				printf("Rotating home\r\n");
 				sHost.send(ROTATE);
 				//sHost.send(DEBUG_2);
-				/*	sHost.send(0x0000);
-					sHost.send(0x0001);
-					sHost.send(0x0002);
-					sHost.send(0x0003);
-					sHost.send(0x0010);
-					sHost.send(0x0011);
-					sHost.send(0x0012);
-					sHost.send(0x0013);*/
 			}
 		}
 		else {
 			//std::cout << "No packet available" << std::endl;
+            */
 #ifdef __linux__
-			usleep(100);
+			usleep(1000);
 #elif _WIN32
-			Sleep(100);
+			Sleep(1000);
 #endif
 			//sHost.send(ROTATE_HOME);
-		}
+		//}
 
 	}
 #ifdef __linux__
