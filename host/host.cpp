@@ -8,6 +8,7 @@
 //#include <iofstream>
 #include <ctime>
 #include <chrono>
+//host sHost;
 #ifdef __linux__
 #define delay(timeXs) usleep(timeXs)
 #include <unistd.h>
@@ -19,26 +20,20 @@
 #elif _WIN32
 #define delay(timeXs) Sleep(timeXs)
 #include <windows.h>
-
-bool loop;
-HANDLE serialHandle;
-BOOL WINAPI CtrlHandler(DWORD fdwCtrlType) {
-	switch (fdwCtrlType) {
-	case CTRL_C_EVENT:
-	case CTRL_CLOSE_EVENT:
-	case CTRL_BREAK_EVENT:
-	case CTRL_LOGOFF_EVENT:
-	case CTRL_SHUTDOWN_EVENT:
-		CloseHandle(serialHandle);
-		return TRUE;
-	}
-}
-
-
-
 #endif
 #include "axisControl.h"
 
+#if defined GCC && defined _WIN32
+#include "mingw.condition_variable.h"
+#include "mingw.mutex.h"
+#include "mingw.thread.h"
+#else
+#include <condition_variable>
+#include <thread>
+#include <mutex>
+#endif
+
+std::thread t1, tMain;
 
 using namespace std;
 
@@ -95,9 +90,7 @@ public:
         cout << "->ROTATED_HOME" << endl;        
         */
     }
-    
-    void handle(short packet);
-    
+        
     int intercept(short pSend, short packet) {
         printf("[Send 0x%04X, Intercepting 0x%04X]", pSend, packet);
         send(pSend);
@@ -134,17 +127,21 @@ public:
         
         cout << "Begin rotation calibration" << endl;        
         cout << "Rotating to home position" << endl;
-        intercept(ROTATE_HOME, ROTATED_HOME);
+        //intercept(ROTATE_HOME, ROTATED_HOME);
+        //send(ROTATE_HOME);
+        waitFor(ROTATE_HOME, ROTATED_HOME);
         //rotateHome();
         cout << "Rotating home, full 360" << endl;
         tp1 = std::chrono::system_clock::now();
-        rotateHome();
-        tp2 = std::chrono::system_clock::now();
+        //send(ROTATE_HOME);
+        waitFor(ROTATE_HOME, ROTATED_HOME);
+        tp2 = getEvent(ROTATED_HOME)->time_point;
         std::chrono::duration<float> elapsedTime = tp2 - tp1;
         float elapsed = elapsedTime.count();
         rotateAxis.setDegreesPerSecond(360 / elapsed);
         cout << elapsed << " seconds passed, " << rotateAxis.getDegreesPerSecond() << " degrees/second" << endl;
-        rotateHome();
+        //send(ROTATE_HOME);
+        waitFor(ROTATE_HOME, ROTATED_HOME);
         rotateAxis.setDegrees(0);
         
         
@@ -177,6 +174,26 @@ public:
 
 };
 
+host sHost(0);
+
+#ifdef _WIN32
+HANDLE serialHandle;
+BOOL WINAPI CtrlHandler(DWORD fdwCtrlType) {
+	switch (fdwCtrlType) {
+	case CTRL_C_EVENT:
+	case CTRL_CLOSE_EVENT:
+	case CTRL_BREAK_EVENT:
+	case CTRL_LOGOFF_EVENT:
+	case CTRL_SHUTDOWN_EVENT:
+        sHost.doLoop = false;
+        t1.join();
+        //tMain.join();
+		CloseHandle(serialHandle);
+		return TRUE;
+	}
+}
+#endif
+
 int main(int argc, char** argv) {
 	time_t timet;
 	if (argc < 2)
@@ -197,10 +214,11 @@ int main(int argc, char** argv) {
 			//printf("%s\n", explain_tcsetattr(err, fd, (termios*)&attribs));
 		error("Invalid attributes for serialport neccessary for operation", a);
 	}
-	host sHost(fd);
+	//sHost = host(fd);
+    sHost.fd = fd;
 #elif _WIN32
 	//HANDLE serialHandle;
-	loop = true;
+	//loop = true;
 	size_t size = strlen(device) + 1;
 	wchar_t* t = (wchar_t*)alloca((sizeof(wchar_t) * size));
 	t[strlen(device)] = L'\0';
@@ -234,13 +252,17 @@ int main(int argc, char** argv) {
 
 	SetCommTimeouts(serialHandle, &timeout);
 
-	host sHost(serialHandle);
+	//sHost = host(serialHandle);
+    sHost.fd = serialHandle;
 #endif
+//t1(&serialClient::eventLoop, &sHost);
 
+t1 = std::thread(&serialClient::eventLoop, (serialClient*)&sHost);
+//sHost.eventLoop();
 #ifdef _WIN32
-	while (loop) {
+	while (sHost.doLoop) {
 #elif __linux__
-	while (1) {
+	while (sHost.doLoop) {
 #endif
 sHost.calibrateRotation();
 /*
@@ -272,6 +294,7 @@ sHost.calibrateRotation();
 		//}
 
 	}
+    t1.join();
 #ifdef __linux__
 	close(fd);
 #elif _WIN32

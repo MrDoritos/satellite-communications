@@ -39,6 +39,15 @@
 #if defined _WIN32 || defined __linux__
 #include <iostream>
 #include <climits>
+#if defined GCC && defined _WIN32
+#include "mingw.condition_variable.h"
+#include "mingw.mutex.h"
+#include "mingw.thread.h"
+#else
+#include <condition_variable>
+#include <thread>
+#include <mutex>
+#endif
 #endif
 
 #define ifarduino if defined(__AVR_ATmega328P__)
@@ -48,10 +57,11 @@ public:
 #if defined(__AVR_ATmega328P__)
 serialClient() {}
 #elif __linux__
-serialClient(int fd) {
+serialClient(int fd)
 #elif _WIN32
-serialClient(HANDLE fd) {
+serialClient(HANDLE fd)
 #endif
+{
 this->fd = fd;
 }
 #ifdef __linux__
@@ -59,6 +69,7 @@ int fd;
 #elif _WIN32
 HANDLE fd;
 #endif
+#if defined __linux__ || defined _WIN32
 virtual void onRotateHome() {}
 virtual void onRotated() {}
 virtual void onRollEdge() {}
@@ -73,6 +84,58 @@ virtual void onRotate() {}
 virtual void onReset() {}
 virtual void onRollPulldown() {}
 virtual void onRotatePulldown() {}
+virtual void onUpdate(float elapsedTime) {}
+bool doLoop = true;
+//void eventLoop(serialClient* client) {
+static void eventLoop(serialClient* client){
+    while (client->doLoop) {        
+    short rec = client->blockingRecieve();
+    //if (!IsError) 
+        client->handle(rec);
+    //std::cout << "RECIEVE: ";
+    //std::printf("0x%04x\r\n", rec);
+    }
+}
+void waitFor(short sSend, short sRecieve) {
+    if (sRecieve - ROTATE_HOME < 0) {
+        return;
+    }
+    event* n = getEvent(sRecieve);
+    send(sSend);
+    n->waitFor();
+}
+void waitFor(int eventNum) {
+    if (eventNum - ROTATE_HOME < 0) {
+        return;
+    }
+    getEvent(eventNum)->waitFor();
+    //event* evt = getEvent(eventNum);    
+    //std::unique_lock<std::mutex> lock(evt->m);    
+    //evt->updated.wait(lock, [evt]{return evt->happened; });
+}
+private:
+struct event {
+    public:
+    bool happened=false;
+    bool hasHappened() {return happened;}
+    std::chrono::time_point<std::chrono::system_clock> time_point;
+    void waitFor() {
+        //std::cout << "ee" << std::endl;
+        while (!happened) {Sleep(50); /*std::cout << "." << std::endl;*/}
+        happened = false;
+    }
+    void happen() {
+        happened = true;
+    }
+    void unhappen() {
+        happened = false;
+    }
+} events[20];
+public:
+event* getEvent(int eventNum) {
+    return &events[eventNum - ROTATE_HOME];
+}
+#endif
 ~serialClient() {}
 short send(short data) {
 #if defined(__AVR_ATmega328P__)
@@ -108,6 +171,65 @@ ClearCommError(fd, lperrors, &cmStat);
 return cmStat.cbInQue;
 #endif
 }
+#if defined __linux__ || defined _WIN32
+
+void update(short packet) {
+    int n = packet - ROTATE_HOME;
+    for (int i = 0; i < 20; i++) {
+        if (i == n) {
+            getEvent(i + ROTATE_HOME)->happen();
+        } else {
+            getEvent(i + ROTATE_HOME)->unhappen();
+        }
+    }
+}
+void handle(short packet) {
+    for (int i = 0; i < 20; i++) {
+        events[i].unhappen();
+    }
+    if (packet - ROTATE_HOME >= 0) {
+        event* pct = getEvent(packet);
+    pct->time_point = std::chrono::system_clock::now();
+    pct->happen();
+    //update(packet);
+    //std::unique_lock<std::mutex> lock(pct->m);
+    //pct->happened = true;
+    //pct->updated.notify_all();
+    }
+    switch(packet) {
+        case ROTATED_HOME:
+        onRotate();
+        return;
+        case ROLLED_EDGE:
+        onRolledEdge();
+        return;
+        case ROLLED_HOME:
+        onRolled();
+        return;
+        case PWR_FAIL:
+        onPowerFailure();
+        return;
+        case MTR_DISC:
+        onMotorDisconnect();
+        return;
+    }
+}
+#endif
+
+#if defined __linux__ || defined _WIN32
+short blockingRecieve() {
+char data[2];
+#ifdef _WIN32
+LPDWORD d = (LPDWORD)alloca(sizeof(DWORD));
+while (!isPacketReady()) {Sleep(50);}
+ReadFile(fd, &data, 2, d, NULL);
+//std::cout << "ere" << std::endl;
+#elif __linux__
+read(fd, &data, 2);
+#endif  
+return ((short(data[1]) << 8) | short(data[0]));
+}
+#endif
 
 short recieve() {
 #if defined(__AVR__ATmega328P__)
