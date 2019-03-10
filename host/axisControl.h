@@ -6,6 +6,8 @@ public:
 axisControl(double maxDegrees);
 void setDegreesPerSecond(double dps) {this->degreesPerSecond = dps;}
 double getDegreesPerSecond() { return degreesPerSecond; }
+double getDegrees() { return degrees; }
+double getMaxDegrees() { return maxDegrees; }
 
 bool mustReverse(double degrees);
 double actualDegrees(double degrees);

@@ -10,8 +10,13 @@ return radians * 180 / pi;
 }
 
 double utils::wrap(double degrees, double max) {
-while (degrees > max) {
+if (max <= 0)
+	return 0;
+while (degrees >= max) {
 degrees -= max;
+}
+while (degrees < 0) {
+degrees += max;
 }
 return degrees;
 }

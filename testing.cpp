@@ -20,7 +20,30 @@ cout << "180, 90   -> " << utils::wrap(180, 90) << endl;
 cout << "360, 360  -> " << utils::wrap(360, 360) << endl;
 }
 
+void testAxisControl() {
+//axisControl controls[5];
+axisControl* controls = (axisControl*)alloca(sizeof(axisControl) * 5);
+for (int i = 0; i < 5; i++) { controls[i] = axisControl(i * 60); }
+for (int i = 0; i < 5; i++) {
+	cout << "Testing axisControl.h::mustReverse" << endl;
+	for (int d = 0; d < 360; d+=90) {
+	for (int da = 0; da < 720; da+= 75) {
+		controls[i].setDegrees(da);
+		cout << "[" << controls[i].getDegrees() << ", " << controls[i].getMaxDegrees() << "] " << d << " -> " << controls[i].mustReverse(d) << endl;
+	}
+	}
+
+	cout << "Testing axisControl.h::actualDegrees" << endl;
+	for (int d = 0; d < 720; d+=75) {
+		cout << d << ", " << controls[i].getMaxDegrees() << "\r\t   -> " << controls[i].actualDegrees(d) << endl;
+	}
+}
+}
+
 int main() {
 cout << "Testing utils" << endl;
 testUtils();
+cout << "Testing axisControl" << endl;
+testAxisControl();
 }
+
