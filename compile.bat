@@ -1,0 +1,1 @@
+C:\Users\Ian\Downloads\pocketcpp\MinGW\bin\g++ -DGCC -Idata\ -Ihost\ host\axisControl.cpp host\utils.cpp host\host.cpp -o main.exe

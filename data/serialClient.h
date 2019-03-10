@@ -29,11 +29,16 @@
 
 #if defined(__AVR_ATmega328P__)
 #include "Arduino.h"
-#else
-#include <iostream>
-#include <climits>
+#elif __linux__
 #include <unistd.h>
 #include <sys/ioctl.h>
+#elif _WIN32
+#include <windows.h>
+#endif
+
+#if defined _WIN32 || defined __linux__
+#include <iostream>
+#include <climits>
 #endif
 
 #define ifarduino if defined(__AVR_ATmega328P__)
@@ -42,11 +47,17 @@ class serialClient {
 public:
 #if defined(__AVR_ATmega328P__)
 serialClient() {}
-#else
+#elif __linux__
 serialClient(int fd) {
+#elif _WIN32
+serialClient(HANDLE fd) {
+#endif
 this->fd = fd;
 }
+#ifdef __linux__
 int fd;
+#elif _WIN32
+HANDLE fd;
 #endif
 virtual void onRotateHome() {}
 virtual void onRotated() {}
@@ -70,10 +81,15 @@ if (!Serial)
 uint8_t* buf;
 buf = (uint8_t*)&data;
 Serial.write(buf, 2);
-#else
+#elif __linux__
 char* buf;
 buf = (char*)&data;
 write(fd, buf, 2);
+#elif _WIN32
+char* buf;
+buf = (char*)&data;
+LPDWORD b = (LPDWORD)alloca(sizeof(DWORD));
+WriteFile(fd, buf, 2, b, NULL);
 #endif
 return NO_ERROR;
 }
@@ -81,10 +97,15 @@ return NO_ERROR;
 int available() {
 #if defined(__AVR_ATmega328P__)
 return Serial.available();
-#else
+#elif __linux__
 int length = 0;
 ioctl(fd, FIONREAD, &length);
 return length;
+#elif _WIN32
+COMSTAT cmStat;
+LPDWORD lperrors = (LPDWORD)alloca(sizeof(DWORD));
+ClearCommError(fd, lperrors, &cmStat);
+return cmStat.cbInQue;
 #endif
 }
 
@@ -98,12 +119,19 @@ short data[2];
 data[0] = Serial.read();
 data[1] = Serial.read();
 return ((data[1] << 8) | data[0]);
-#else
+#elif __linux__
 if (!isPacketReady())
 	return EOF;
 char data[2];
 read(fd, &data, 2);
 //stream->read(&data[0], 2);
+return ((short(data[1]) << 8) | short(data[0]));
+#elif _WIN32
+if (!isPacketReady())
+    return EOF;
+char data[2];
+LPDWORD d = (LPDWORD)alloca(sizeof(DWORD));
+ReadFile(fd, &data, 2, d, NULL);
 return ((short(data[1]) << 8) | short(data[0]));
 #endif
 }
@@ -116,7 +144,7 @@ bool isReady();
 bool isPacketReady() {
 #if defined(__AVR__ATmega328P__)
 return (Serial.available() > 1);
-#else
+#elif __linux__
 bool gn;
 //stream->seekg(0, stream->end);
 size_t length = 0;
@@ -125,7 +153,8 @@ if (length > 1)
 	return true;
 else
 	return false;
-
+#elif _WIN32
+return (available() > 1);
 //gn = (length > 1);
 //if (length < 0) return gn;
 //stream->seekg(0, stream->beg);
