@@ -90,6 +90,7 @@ bool doLoop = true;
 static void eventLoop(serialClient* client){
     while (client->doLoop) {        
     short rec = client->blockingRecieve();
+	std::cout << "RECIEVE" << std::endl;
     //if (!IsError) 
         client->handle(rec);
     //std::cout << "RECIEVE: ";
@@ -218,11 +219,13 @@ void handle(short packet) {
 
 #if defined __linux__ || defined _WIN32
 short blockingRecieve() {
-char data[2];
+char data[3];
+data[2] = '\0'; 
 #ifdef _WIN32
 LPDWORD d = (LPDWORD)alloca(sizeof(DWORD));
-while (!isPacketReady()) {Sleep(50);}
+//while (!isPacketReady()) {Sleep(50);}
 ReadFile(fd, &data, 2, d, NULL);
+if (*d == 0) return 0x0000;
 //std::cout << "ere" << std::endl;
 #elif __linux__
 read(fd, &data, 2);
