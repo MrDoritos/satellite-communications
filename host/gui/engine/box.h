@@ -1,6 +1,7 @@
 #pragma once
 #include "boxsize.h"
 #include <string>
+#include <cstring>
 #define DOUBLE_PI 6.28318530f
 #define PI		  3.14159265f
 
@@ -118,7 +119,7 @@ void set(const char* str, int count, int x, int y) {
 }
 
 void set(const char* str, int x, int y) {
-	set(str, strlen(str), x, y);
+	set(str, std::strlen(str), x, y);
 }
 
 void set(char* str, int count, int x, int y) {
