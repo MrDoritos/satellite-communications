@@ -35,18 +35,18 @@ class arduinoClient
   arduinoClient()  
  {
   //Set pin modes of the controller
-  pinMode(ROLL_EDGE_MICROSWITCH, INPUT_PULLUP);  //Pin 2
-  pinMode(ROLL_HOME_MICROSWITCH, INPUT_PULLUP);  //Pin 3
-  pinMode(ROTATE_HOME_MICROSWITCH, INPUT_PULLUP);//Pin 4
+  pinMode(ROLL_EDGE_MICROSWITCH  , INPUT_PULLUP);  //Pin 2
+  pinMode(ROLL_HOME_MICROSWITCH  , INPUT_PULLUP);  //Pin 3
+  pinMode(ROTATE_HOME_MICROSWITCH, INPUT_PULLUP);  //Pin 4
   
-  pinMode(ROLL_MOTOR, OUTPUT); // Pin 5
-  pinMode(ROTATE_MOTOR, OUTPUT); // Pin 6
+  pinMode(ROLL_MOTOR    , OUTPUT); // Pin 5
+  pinMode(ROTATE_MOTOR  , OUTPUT); // Pin 6
   
-  pinMode(ROLL_REVERSE, OUTPUT); // Pin 7
+  pinMode(ROLL_REVERSE  , OUTPUT); // Pin 7
   pinMode(ROTATE_REVERSE, OUTPUT); // Pin 8
   
   #ifdef DEBUG
-  pinMode(DEBUG_PIN, INPUT_PULLUP);
+  pinMode(DEBUG_PIN     , INPUT_PULLUP);
   #endif
   
   //Short motors
