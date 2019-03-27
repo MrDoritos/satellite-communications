@@ -1,6 +1,11 @@
 #define __AVR__ATmega328P__
 #define DEBUG
-#include "..\..\data\serialClient.h"
+
+#if __has_include("C:\\Users\\Ian\\source\\repos\\satellite-communications\\data\\serialClient.h")
+#include "C:\\Users\\Ian\\source\\repos\\satellite-communications\\data\\serialClient.h"
+#else
+#error Change path to "serialClient.h"
+#endif
 
 //Microswitch pins
 #define ROLL_EDGE_MICROSWITCH 2

@@ -22,7 +22,7 @@
 #define IsError(xxx) ((xxx & ERRMASK) > 0)
 #define ERRMASK 0xF000
 #define DISCONNECTED 0x1000
-#define EOF 0x2000
+#define _EOF 0x2000
 #define GENERAL_ERROR 0x3000
 
 #define NO_ERROR 0x0000
@@ -54,7 +54,7 @@
 #endif
 #endif
 
-#define ifarduino if defined(__AVR_ATmega328P__)
+//#define ifarduino if defined(__AVR_ATmega328P__)
 
 class serialClient {
 public:
@@ -62,12 +62,15 @@ public:
 serialClient() {}
 #elif __linux__
 serialClient(int fd)
-#elif _WIN32
-serialClient(HANDLE fd)
-#endif
 {
 this->fd = fd;
 }
+#elif _WIN32
+serialClient(HANDLE fd)
+{
+this->fd = fd;
+}
+#endif
 #ifdef __linux__
 int fd;
 #elif _WIN32
@@ -152,7 +155,7 @@ event* getEvent(int eventNum) {
     return &events[eventNum - ROTATE_HOME];
 }
 #endif
-~serialClient() {}
+
 short send(short data) {
 #if defined(__AVR_ATmega328P__)
 if (!Serial)
@@ -187,8 +190,8 @@ ClearCommError(fd, lperrors, &cmStat);
 return cmStat.cbInQue;
 #endif
 }
-#if defined __linux__ || defined _WIN32
 
+#if defined __linux__ || defined _WIN32
 void update(short packet) {
     int n = packet - ROTATE_HOME;
     for (int i = 0; i < 20; i++) {
@@ -254,32 +257,32 @@ short recieve() {
 if (!Serial)
 	return DISCONNECTED;
 if (!isPacketReady())
-	return EOF;
+	return _EOF;
 short data[2];
 data[0] = Serial.read();
 data[1] = Serial.read();
 return ((data[1] << 8) | data[0]);
 #elif __linux__
 if (!isPacketReady())
-	return EOF;
+	return _EOF;
 char data[2];
 read(fd, &data, 2);
 //stream->read(&data[0], 2);
 return ((short(data[1]) << 8) | short(data[0]));
 #elif _WIN32
 if (!isPacketReady())
-    return EOF;
+    return _EOF;
 char data[2];
 LPDWORD d = (LPDWORD)alloca(sizeof(DWORD));
 ReadFile(fd, &data, 2, d, NULL);
 return ((short(data[1]) << 8) | short(data[0]));
 #endif
 }
-virtual bool onRecieve(short data) {
-return true;
-}
-virtual void onClose() {
-}
+//virtual bool onRecieve(short data) {
+//return true;
+//}
+//virtual void onClose() {
+//}
 bool isReady();
 bool isPacketReady() {
 #if defined(__AVR__ATmega328P__)
