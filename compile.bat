@@ -11,12 +11,12 @@ set "argz=-DGCC -w"
 ::Comment out to not compile
 :: --Process--
 @echo on
-::C:\Users\%username%\Downloads\pocketcpp-0.7\pocketcpp\MinGW\bin\g++ %argz% %include% %files% host\process\host.cpp -o host.exe
+C:\Users\%username%\Downloads\pocketcpp-0.7\pocketcpp\MinGW\bin\g++ %argz% %include% %files% host\process\host.cpp -o host.exe
 @echo off
 set "procErrno=%errorlevel%"
 :: --GUI--
 @echo on
-C:\Users\%username%\Downloads\pocketcpp-0.7\pocketcpp\MinGW\bin\g++ %argz% %guiInclude% %guiFiles% host\gui\main.cpp -o gui.exe
+::C:\Users\%username%\Downloads\pocketcpp-0.7\pocketcpp\MinGW\bin\g++ %argz% %guiInclude% %guiFiles% host\gui\main.cpp -o gui.exe
 @echo off
 set "guiErrno=%errorlevel%"
 set "orErrno=0"

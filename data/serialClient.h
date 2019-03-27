@@ -27,6 +27,10 @@
 
 #define NO_ERROR 0x0000
 
+#if defined _WIN32 && defined GCC
+//#include <SDKDDKVer.h>
+#endif
+
 #if defined(__AVR_ATmega328P__)
 #include "Arduino.h"
 #elif __linux__
@@ -117,20 +121,31 @@ void waitFor(int eventNum) {
 private:
 struct event {
     public:
-    bool happened=false;
+	event() {
+		happened = false;
+	}
+    //bool happened=false;
     bool hasHappened() {return happened;}
+	//std::atomic<bool> happened;
+	bool happened;
     std::chrono::time_point<std::chrono::system_clock> time_point;
     void waitFor() {
         //std::cout << "ee" << std::endl;
-        while (!happened) {Sleep(50); /*std::cout << "." << std::endl;*/}
-        happened = false;
+        //while (!happened) {Sleep(50); /*std::cout << "." << std::endl;*/}
+        //happened = false;
+		std::unique_lock<std::mutex> l(mtx);
+		cv.wait(l, [this]{return happened;});
     }
     void happen() {
         happened = true;
+		cv.notify_all();
     }
     void unhappen() {
         happened = false;
     }
+	private:
+	std::condition_variable cv;
+	std::mutex mtx;
 } events[20];
 public:
 event* getEvent(int eventNum) {
