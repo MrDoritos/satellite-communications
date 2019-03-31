@@ -16,8 +16,6 @@ public:
 	bool OnUpdate(float elapsedtime);
 	void OnClose();
 	bool OnCreate();
-	void CollisionDetection();
-	void PrintStats(gamecamera & cam);
 	bool OnFrame();
 	
 protected:

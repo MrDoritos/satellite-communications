@@ -12,7 +12,6 @@ class playerOrb
 {
 public:
 	playerOrb(gamecamera& gamecamera, agarioGameMap& gameMap, agarioGame& game);
-	playerOrb(gamecamera & gCamera, agarioGameMap & gameMap, agarioGame & game, float score);
 	playerOrb();
 	~playerOrb();
 	float getScore() { return score; }
@@ -20,7 +19,6 @@ public:
 	float getPositionY() { return positionY; }
 	//1.0f to return the normal radius, no intent to draw
 	float getRadius(float scale);
-	void setScore(float score) { this->score = score; }
 	float getRadius();
 	//1.0f to return the normal diameter, no intent to draw
 	float getDiameter(float scale);
@@ -49,9 +47,6 @@ public:
 	bool needToDraw();
 	void drawToCamera();
 	void drawTo(gamecamera& gameCamera);
-	bool collides(playerOrb& player);
-
-	bool collides(playerOrb * player);
 	
 protected:
 	float positionX;

@@ -183,7 +183,7 @@ if (body.lastUpdateHitWall())
 
 int main(int argc, char* argv[])
 {
-	/*
+	
 	const char* dvd = "C:\\Users\\Ian\\source\\repos\\console_agario_cpp\\Debug\\dvd.png";
 	char* path = (char*)dvd;
 	if (argc > 1) {
@@ -204,8 +204,8 @@ int main(int argc, char* argv[])
 	HANDLE og = GetStdHandle(STD_OUTPUT_HANDLE);
 	imageRender iRender(&pPng, &bs, og, charInfos, samplerBuffer);
 	iRender.Start();
-	*/
-	agarioGame::Game();
+	
+	//agarioGame::Game();
 	return 0;
 }
 

@@ -20,17 +20,6 @@ playerOrb::playerOrb(gamecamera& gCamera, agarioGameMap& gameMap, agarioGame& ga
 	this->angle = 0.0f;
 }
 
-playerOrb::playerOrb(gamecamera& gCamera, agarioGameMap& gameMap, agarioGame& game, float score)
-{
-	this->gameCamera = &gCamera;
-	this->gameMap = &gameMap;
-	this->game = &game;
-	positionX = 0.0f;
-	positionY = 0.0f;
-	this->score = score;
-	this->angle = 0.0f;
-}
-
 playerOrb::playerOrb()
 {
 }
@@ -208,79 +197,32 @@ void playerOrb::drawToCamera()
 
 void playerOrb::drawTo(gamecamera & gameCamera)
 {
-	int boundsX = gameCamera.screen->sizeX, boundsY = gameCamera.screen->sizeY;
 	float scale = gameCamera.scale();
-	float playerScreenMinX = minX() / scale;
-	float playerScreenMinY = minY() / scale;
+	int radius = getRadius(scale);
+	float diameter = getDiameter(scale);
+	int fCenterX = minX(), fCenterY = minY();
+	int boundsX = gameCamera.screen->sizeX, boundsY = gameCamera.screen->sizeY;
+	char* fB = gameCamera.framebuffer();
 
-	float cameraRadius = gameCamera.radius() / scale;
-	float cameraDiameter = cameraRadius * 2;
-	float cameraScreenMinX = (gameCamera.minX() / scale);// - cameraRadius;
-	float cameraScreenMaxX = cameraScreenMinX + (cameraRadius / 2);
-	float cameraScreenMinY = (gameCamera.minY() / scale);// -cameraRadius;
-	float cameraScreenMaxY = cameraScreenMinY + (cameraRadius / 2);
-
-
-	float playerRadius = getRadius(scale);
-	float playerDiameter = playerRadius * 2;
-
-	float playerCenterX = playerScreenMinX + playerDiameter;
-	float playerCenterY = playerScreenMinY + playerDiameter;
-
-	char* fb = gameCamera.framebuffer();
-
-	//Draw circle
+	//Draw Orb
 
 	float step = 0.03f;
 	int x, y;
-
-	for (float theta = 0.0f; theta < DOUBLE_PI; theta += step) {
-		x = ((playerCenterX + playerRadius * cos(theta))) - cameraScreenMaxX;// -gameCamera.minX();
-		y = ((playerCenterY - playerRadius * sin(theta))) - cameraScreenMaxY;// -cameraScreenMinY;
-		
+	for (float theta = 0.0; theta < DOUBLE_PI; theta += step) {
+		x = ((fCenterX + radius * cos(theta))) + gameCamera.centerX();
+		y = ((fCenterY - radius * sin(theta))) + gameCamera.centerY();
 		if (x < boundsX && y < boundsY && y >= 0 && x >= 0) {
-			fb[gameCamera.get(x, y)] = '#';
+			fB[gameCamera.get(x, y)] = '#';
 		}
 	}
 
-
-	//float scale = gameCamera.scale();
-	//int radius = getRadius(scale);
-	//float diameter = getDiameter(scale);
-	//int fCenterX = (minX()/ scale) + radius, fCenterY = maxY() + radius;
-	//int boundsX = gameCamera.screen->sizeX, boundsY = gameCamera.screen->sizeY;
-	//char* fB = gameCamera.framebuffer();
-
-	////Draw Orb
-
-	//float step = 0.03f;
-	//int x, y;
-	//for (float theta = 0.0; theta < DOUBLE_PI; theta += step) {
-	//	x = ((fCenterX + radius * cos(theta))) -gameCamera.radius();
-	//	y = ((fCenterY - radius * sin(theta))) -gameCamera.radius();
-	//	if (x < boundsX && y < boundsY && y >= 0 && x >= 0) {
-	//		fB[gameCamera.get(x, y)] = '#';
-	//	}
-	//}
-
 	//Draw Velocity
 
-	//for (float cradius = 0.0f; cradius < radius; cradius += step) {
-	//	x = (fCenterX + cradius * cos(rigidbody::degtorad(angle))) - gameCamera.centerX();
-	//	y = (fCenterY + cradius * sin(rigidbody::degtorad(angle))) - gameCamera.centerY();
-	//	if (x < boundsX && y < boundsY && y >= 0 && x >= 0) {
-	//		fB[gameCamera.get(x, y)] = '*';
-	//	}
-	//}
-}
-
-bool playerOrb::collides(playerOrb & player)
-{
-	float d = rigidbody::distance(this->centerX(), player.centerX(), this->centerY(), player.centerY());
-	return (player.getRadius() + this->getRadius() <= d);
-}
-
-bool playerOrb::collides(playerOrb* player) {
-	float d = rigidbody::distance(this->centerX(), player->centerX(), this->centerY(), player->centerY());
-	return (player->getRadius() + this->getRadius() <= d);
+	for (float cradius = 0.0f; cradius < radius; cradius += step) {
+		x = (fCenterX + cradius * cos(rigidbody::degtorad(angle))) + gameCamera.centerX();
+		y = (fCenterY + cradius * sin(rigidbody::degtorad(angle))) + gameCamera.centerY();
+		if (x < boundsX && y < boundsY && y >= 0 && x >= 0) {
+			fB[gameCamera.get(x, y)] = '*';
+		}
+	}
 }

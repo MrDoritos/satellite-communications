@@ -1,7 +1,6 @@
 #pragma once
 #include "boxsize.h"
 #include <string>
-#include <cstring>
 #define DOUBLE_PI 6.28318530f
 #define PI		  3.14159265f
 
@@ -35,6 +34,7 @@ box(box* box)
 	_framebuffersize = box->_framebuffersize;
 	_framebuffer = box->_framebuffer;
 
+	setAlpha(box->useAlpha);
 	doRender = true;
 	isDrawing = false;
 	doClear = true;
@@ -112,14 +112,6 @@ void set(int val, int count, int x, int y) {
 	char* buf = (char*)alloca(count);
 	snprintf(buf, count, "%i", val);
 	set(buf, count, x, y);
-}
-
-void set(const char* str, int count, int x, int y) {
-	set((char*)&str[0], count, x, y);
-}
-
-void set(const char* str, int x, int y) {
-	set(str, std::strlen(str), x, y);
 }
 
 void set(char* str, int count, int x, int y) {
