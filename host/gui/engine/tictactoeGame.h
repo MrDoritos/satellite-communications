@@ -5,6 +5,7 @@
 #include "gamecamera.h"
 #include "box.h"
 #include <string>
+#include <iostream>
 #include <Windows.h>
 #include "player.h"
 #include "gameState.h"
@@ -26,8 +27,12 @@ class tictactoeGame :
 			box cam(cameraSize, framebuffer, framebuffersize);
 			CHAR_INFO* cIfb = CharInfoBuffer(framebuffersize);
 			int boardsize = 3;
+			int squares = boardsize * boardsize;
 			int players = 2;
 			spot* board = SpotAlloc();
+			for (int i = 0; i < squares; i++) {
+				board[i] = spot(i % boardsize, i / boardsize);
+			}
 			player* playErs = PlayerAlloc(players);
 			playErs[1] = player(true);
 			gameState state(playErs, players, boardsize, board, &cam);
@@ -63,6 +68,8 @@ class tictactoeGame :
 				return;
 			spot sp;
 			state.getSpot(x, y, sp);
+			if (sp.taken)
+				return;
 			sp.taken = true;
 			sp.player = &state.player[t++ % state.playerCount];
 			//boxsize of = boxsize(bX * 30, bY * 30, 30, 30);
@@ -71,7 +78,51 @@ class tictactoeGame :
 			sp.draw(camera, of);
 			lX = bX;
 			lY = bY;			
+			
+			if (isWin(sp)) {
+				printf("Thank you for playing!\n");
+				exit(0);
+			}
+			
 			return; 
+		}
+		
+		bool isWin(spot& sp) {
+			int nInARow = state.boardsize;
+			player* p = sp.player;
+			
+			int b = state.boardsize - sp.x - 1;
+			int l = state.boardsize - sp.y - 1;
+			
+			bool lWin = true, bWin = true, ldWin = true, bdWin = true;
+			
+			//spot spd(-1,-1);
+				
+			//Check vertical
+			for (int y = 0; bWin && y < state.boardsize; y++) {
+				bWin = (state.getSpot(sp.x, y)->player == p);
+			}
+			//Check horizontal
+			for (int x = 0; lWin && x < state.boardsize; x++) {
+				lWin = (state.getSpot(x, sp.y)->player == p);
+			}
+			
+			//If the board supports a diagonal win
+			if (state.boardsize % 2) {
+			//Check +x diagonal
+			for (int x = 0, y = 0; ldWin && x < state.boardsize && y < state.boardsize; x++, y++) {
+				ldWin = (state.getSpot(x, y)->player == p);
+			}
+			//Check -x diagonal
+			for (int x = 0, y = state.boardsize - 1; bdWin && x < state.boardsize && y > -1; x++, y--) {
+				bdWin = (state.getSpot(x, y)->player == p);
+			}
+			} else {
+				ldWin = false;
+				bdWin = false;
+			}
+			return (lWin | bWin | ldWin | bdWin);
+			
 		}
 		
 		int lX, lY, t = 0;

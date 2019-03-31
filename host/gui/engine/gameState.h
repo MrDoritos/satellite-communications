@@ -15,7 +15,7 @@ this->boardsize = boardsize;
 this->spots = spots;
 this->camera = camera;
 }
-gameState(gameState& state)
+gameState(const gameState& state)
 :drawInfo(state.boardsize, state.camera) {
 	this->turn = state.turn;
 	this->player = state.player;
@@ -36,6 +36,14 @@ bool isSpotAvaible(int x, int y) {
 	return sp.taken;
 }
 
+spot* getSpot(int x, int y) {
+	//You fucked up
+	if (!isSpot(x, y))
+		return nullptr;
+	
+	int index = (y * boardsize) + x;
+	return &this->spots[index];
+}
 bool getSpot(int x, int y, spot& square) {
 	if (!isSpot(x, y)) 
 		return false;

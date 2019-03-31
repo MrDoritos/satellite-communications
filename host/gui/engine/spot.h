@@ -9,6 +9,20 @@ static const png oDesign = png("o.png");
 	
 struct spot {
 	public:
+	spot(int spx, int spy)		
+	{
+		x = spx;
+		y = spy;
+		taken = false;
+	}
+	spot() {}
+	//spot()
+	//{
+	//	x = 0;
+	//	y = 0;
+	//	taken = false;
+	//}
+	int x, y;
 	bool taken;
 	player* player;
 	void draw(box* camera, boxsize& square) {
