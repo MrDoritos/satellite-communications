@@ -16,12 +16,6 @@ struct spot {
 		taken = false;
 	}
 	spot() {}
-	//spot()
-	//{
-	//	x = 0;
-	//	y = 0;
-	//	taken = false;
-	//}
 	int x, y;
 	bool taken;
 	player* player;
@@ -41,6 +35,12 @@ struct spot {
 				fb[camera->get(x + square.offsetX, y + square.offsetY)] = image->getSample(x, y, &square)->negativeValue() > 0.5 ? '#' : ' ';
 			}
 		}
+		#ifdef TTT_DEBUG
+		//if taken		
+		camera->set(taken ? 1 : 0, 2, old.offsetX, old.offsetY + 1);
+		//owner
+		camera->set((int)player, 12, old.offsetX+2, old.offsetY + 1);		
+		#endif
 	}
 	private:
 };

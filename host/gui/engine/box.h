@@ -28,16 +28,18 @@ box()
 }
 //Copy constructor
 //
-box(box* box)
-:boxsize(box)
+box(box* boxd)
+:boxsize(boxd)
 {
-	_framebuffersize = box->_framebuffersize;
-	_framebuffer = box->_framebuffer;
+	_framebuffersize = boxd->_framebuffersize;
+	_framebuffer = boxd->_framebuffer;
 
-	setAlpha(box->useAlpha);
-	doRender = true;
+	//setAlpha(boxd->useAlpha);
+	useAlpha = boxd->useAlpha;
+	clearchar = boxd->clearchar;
+	doRender = boxd->doRender;
 	isDrawing = false;
-	doClear = true;
+	doClear = boxd->doClear;
 }
 
 bool isDrawing;

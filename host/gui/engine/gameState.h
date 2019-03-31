@@ -8,24 +8,25 @@ class gameState {
 public:
 gameState(player* players, int playerCount, int boardsize, spot* spots, box* camera)
 :drawInfo(boardsize, camera) {
-this->turn = 0;
-this->player = players;
-this->playerCount = playerCount;
-this->boardsize = boardsize;
-this->spots = spots;
-this->camera = camera;
+	this->turn = 0;
+	this->player = players;
+	this->playerCount = playerCount;
+	this->boardsize = boardsize;
+	this->spots = spots;
+	this->camera = camera;
 }
-gameState(const gameState& state)
-:drawInfo(state.boardsize, state.camera) {
+gameState(gameState& state)
+:drawInfo(state.boardsize, state.camera) 
+{	
 	this->turn = state.turn;
 	this->player = state.player;
 	this->playerCount = state.playerCount;
 	this->boardsize = state.boardsize;
 	this->spots = state.spots;	
-	this->camera = state.camera;
+	this->camera = state.camera;	
 }
 
-bool isSpotAvaible(int x, int y) {
+bool isSpotAvailable(int x, int y) {
 	if (!isSpot(x, y))
 	{
 		exit(23456732);
@@ -64,6 +65,8 @@ spot* spots;
 box* camera;
 struct draw_info_t {
 	public:
+	draw_info_t() {
+	}
 	draw_info_t(int boardsize, box* camera) {
 		this->boardsize = boardsize;
 		this->camera = camera;
@@ -79,8 +82,8 @@ struct draw_info_t {
 		squaresize = (usL / boardsize) + 1;
 	}
 	void getBoxsize(int x, int y, boxsize& size) {
-		int ox = x * squaresize;
-		int oy = y * squaresize;
+		int ox = (x * squaresize) + camera->getscaleX(0.5f, width);
+		int oy = (y * squaresize) + camera->getscaleY(0.5f, width);
 		size = boxsize(ox, oy, squaresize, squaresize);
 	}
 } drawInfo;
@@ -88,15 +91,17 @@ void draw() {
 	char* fb = camera->getFramebuffer();
 	int minLen = camera->getMin();
 	float usableLen = minLen - boardsize;
+	float oX = camera->getscaleX(0.5f, minLen);
+	float oY = camera->getscaleY(0.5f, minLen);
 	float boxSize = usableLen / float(boardsize);
 	for (float xline = boxSize + 1; xline < minLen; xline += boxSize + 1) {
 		for (int y = 0; y < minLen; y++) {
-			fb[camera->get(xline, y)] = '#';
+			fb[camera->get(xline + oX, y + oY)] = '#';
 		}
 	}
 	for (float yline = boxSize + 1; yline < minLen; yline += boxSize + 1) {
 		for (int x = 0; x < minLen; x++) {
-			fb[camera->get(x, yline)] = '#';
+			fb[camera->get(x + oX, yline + oY)] = '#';
 		}
 	}
 }
