@@ -39,7 +39,6 @@ bool isSpotAvailable(int x, int y) {
 }
 
 spot* getSpot(int x, int y) {
-	//You fucked up
 	if (!isSpot(x, y))
 		return nullptr;
 	

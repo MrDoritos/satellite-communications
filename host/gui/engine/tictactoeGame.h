@@ -94,7 +94,7 @@ class tictactoeGame :
 				BeginRaster();
 				printf("Thank you for playing!\n");
 				exit(0);
-			} else if (t - 1 > state.boardsize*state.boardsize) {
+			} else if (t + 1 > state.boardsize*state.boardsize) {
 				BeginRaster();
 				printf("Tie!\n");
 				exit(0);
