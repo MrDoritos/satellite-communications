@@ -10,9 +10,6 @@
 #include "player.h"
 #include "gameState.h"
 #include "spot.h"
-#include "rigidbody.h"
-#include "winInfo.h"
-#include <cmath>
 
 #define Framebuffer(x) ((char*)alloca(sizeof(char) * x))
 #define CharInfoBuffer(x) ((CHAR_INFO*)alloca(sizeof(CHAR_INFO) * x))
@@ -25,11 +22,9 @@ class tictactoeGame :
 		public:
 		static void Game(int boardsized = 3) {
 			boxsize cameraSize(0,0,100,100); // 0, 0, 201, 134
-			boxsize gameSize(0, cameraSize.getscaleY(0.2), cameraSize.sizeX, cameraSize.getscaleY(0.8));
 			int framebuffersize = cameraSize.characters();
 			char* framebuffer = Framebuffer(framebuffersize);
 			box cam(cameraSize, framebuffer, framebuffersize);
-			//box boardcam(gameSize, framebuffer, framebuffersize);
 			CHAR_INFO* cIfb = CharInfoBuffer(framebuffersize);
 			int boardsize = boardsized;
 			int squares = boardsize * boardsize;
@@ -41,7 +36,7 @@ class tictactoeGame :
 			player* playErs = PlayerAlloc(players);
 			playErs[0] = player(false);
 			playErs[1] = player(true);
-			gameState state(playErs, players, boardsize, board, &cam/*, &boardcam*/);
+			gameState state(playErs, players, boardsize, board, &cam);
 			tictactoeGame game(state, cIfb, cam);	
 			game.Start();
 		}
@@ -88,69 +83,17 @@ class tictactoeGame :
 			lX = bX;
 			lY = bY;			
 			
-			winInfo win;
-			if (isWin(sp, win)) {
-				drawWinLine(win);
+			if (isWin(sp)) {
 				BeginRaster();
 				printf("Thank you for playing!\n");
-				exit(0);
-			} else if (t - 1 > state.boardsize*state.boardsize) {
-				BeginRaster();
-				printf("Tie!\n");
 				exit(0);
 			}
 			
 			return; 
 		}
 		
-		void drawWinLine(winInfo& win) {
-			
-			
-			//Get the drawing parameters of both spots
-			boxsize a;
-			boxsize b;
-			
-			state.drawInfo.getBoxsize(win.a->x, win.a->y, a);
-			state.drawInfo.getBoxsize(win.b->x, win.b->y, b);
-			
-			//Find distance between the middle of the two squares
-			float aX = a.getscaleX(0.5) + a.offsetX;
-			float aY = a.getscaleY(0.5) + a.offsetY;
-			float bX = b.getscaleX(0.5) + b.offsetX;
-			float bY = b.getscaleY(0.5) + b.offsetY;
-			
-			float distance = rigidbody::distance(aX, bX, aY, bY);
-			
-			//Find angle
-			float angle = atan2(aY - bY, aX - bX);
-			
-			//Draw the line			
-			char* fb = camera->getFramebuffer();
-			float step = 0.1f;
-			float offsetX = a.getscaleX(0.5f) + b.offsetX;
-			float offsetY = a.getscaleY(0.5f) + b.offsetY;
-			
-			int x, y;
-			for (float radius = 0.0f; radius < distance; radius += step) {
-				x = floorf(offsetX + radius * cos(angle));
-				y = floorf(offsetY + radius * sin(angle));
-				#ifdef MULTI_POINT
-				int x0 = x - 1, x1 = x, x2 = x + 1;
-				int y0 = y - 1, y1 = y, y2 = y + 1;
-				camera->clip(x0, y0);
-				camera->clip(x1, y1);
-				camera->clip(x2, y2);
-				fb[camera->get(x0, y0)] = '&';
-				fb[camera->get(x1, y1)] = '#';
-				fb[camera->get(x2, y2)] = '&';
-				#else
-				camera->clip(x, y);
-				fb[camera->get(x, y)] = '#';
-				#endif
-			}
-		}
 		
-		bool isWin(spot* sp, winInfo& win) {
+		bool isWin(spot* sp) {
 			int nInARow = state.boardsize;
 			player* p = state.getSpot(sp->x, sp->y)->player;
 			
@@ -160,23 +103,14 @@ class tictactoeGame :
 			bool lWin = true, bWin = true, ldWin = true, bdWin = true;
 			
 			//spot spd(-1,-1);
-							
+				
 			//Check vertical
-			
 			for (int fy = 0; bWin && fy < state.boardsize; fy++) {
 				bWin = (state.getSpot(sp->x, fy)->player == p);
-			}
-			if (bWin) {
-				win.a = state.getSpot(sp->x, 0);
-				win.b = state.getSpot(sp->x, state.boardsize - 1);
 			}
 			//Check horizontal
 			for (int fx = 0; lWin && fx < state.boardsize; fx++) {
 				lWin = (state.getSpot(fx, sp->y)->player == p);
-			}
-			if (lWin) {
-				win.a = state.getSpot(0, sp->y);
-				win.b = state.getSpot(state.boardsize - 1, sp->y);
 			}
 			
 			//If the board supports a diagonal win
@@ -185,19 +119,10 @@ class tictactoeGame :
 			for (int fx = 0, fy = 0; ldWin && fx < state.boardsize && fy < state.boardsize; fx++, fy++) {
 				ldWin = (state.getSpot(fx, fy)->player == p);
 			}
-			if (ldWin) {
-				win.a = state.getSpot(0, 0);
-				win.b = state.getSpot(state.boardsize - 1, state.boardsize - 1);
-			}
 			//Check -x diagonal
 			for (int fx = 0, fy = state.boardsize - 1; bdWin && fx < state.boardsize && fy > -1; fx++, fy--) {
 				bdWin = (state.getSpot(fx, fy)->player == p);
 			}
-			if (bdWin) {
-				win.a = state.getSpot(0, state.boardsize - 1);
-				win.b = state.getSpot(state.boardsize - 1, 0);
-			}
-			
 			} else {
 				ldWin = false;
 				bdWin = false;

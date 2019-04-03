@@ -33,16 +33,6 @@ inline int characters() {
 inline int get(int x, int y) {
 	return ((y * sizeX) + x);
 }
-inline void clip(int&x,int&y) {
-	if (x > sizeX)
-		x = sizeX - 1;
-	if (x < 0)
-		x = 0;
-	if (y > sizeY)
-		y = sizeY - 1;
-	if (y < 0)
-		y = 0;
-}
 double getscaleX(float scale) {
 	return (float(sizeX) * scale);
 }

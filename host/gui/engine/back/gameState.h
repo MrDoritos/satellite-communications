@@ -6,18 +6,17 @@
 
 class gameState {
 public:
-gameState(player* players, int playerCount, int dboardsize, spot* spots, box* camera)
+gameState(player* players, int playerCount, int boardsize, spot* spots, box* camera)
 :drawInfo(boardsize, camera) {
 	this->turn = 0;
 	this->player = players;
 	this->playerCount = playerCount;
-	this->boardsize = dboardsize;
+	this->boardsize = boardsize;
 	this->spots = spots;
 	this->camera = camera;
-	//this->boardview = boardview;
 }
 gameState(gameState& state)
-:drawInfo(state.boardsize, state.camera),boardsize(state.boardsize)
+:drawInfo(state.boardsize, state.camera) 
 {	
 	this->turn = state.turn;
 	this->player = state.player;
