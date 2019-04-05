@@ -32,6 +32,11 @@ pixel * png::getSample(int x, int y, boxsize * src)
 	return getPixel((int)(x / scaleX), (int)(y / scaleY));
 }
 
+pixel *png::getSample(float x, float y, float sizex, float sizey) {
+	float scaleX = float(sizex) / float (size.sizeX), scaleY = float(sizey) / float(size.sizeY);
+	return getPixel((int)(x / scaleX), (int)(y / scaleY));
+}
+
 int png::load(const char * path)
 {
 	std::vector<unsigned char> image;

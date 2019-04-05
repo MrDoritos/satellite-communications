@@ -1,5 +1,6 @@
 #pragma once
 #include "boxsize.h"
+#include "imath.h"
 #include <string>
 #define DOUBLE_PI 6.28318530f
 #define PI		  3.14159265f
@@ -7,6 +8,27 @@
 
 class box : public boxsize {
 public:
+box(int offsetX, int offsetY, int sizeX, int sizeY) 
+:boxsize(offsetX, offsetY, sizeX, sizeY)
+{
+	_framebuffersize = characters();
+	_framebuffer = new char[characters()];
+	
+	doRender = true;
+	isDrawing = false;
+	doClear = true;
+	setAlpha(false);
+	
+	clear();
+}
+void newFramebuffer(int count) {
+	//delete _framebuffer;
+	if (count > 0)
+		_framebuffer = new char[count];
+}
+~box() {
+	//delete _framebuffer;
+}
 box(boxsize& size, char* framebuffer, int framebuffersize, bool useAlpha = false) : boxsize(size) {
 	_framebuffersize = framebuffersize;
 	_framebuffer = framebuffer;
@@ -28,24 +50,41 @@ box()
 }
 //Copy constructor
 //
-box(box* boxd)
-:boxsize(boxd)
+box(box* box)
+:boxsize(box)
 {
-	_framebuffersize = boxd->_framebuffersize;
-	_framebuffer = boxd->_framebuffer;
+	_framebuffersize = box->_framebuffersize;
+	_framebuffer = box->_framebuffer;
 
-	//setAlpha(boxd->useAlpha);
-	useAlpha = boxd->useAlpha;
-	clearchar = boxd->clearchar;
-	doRender = boxd->doRender;
+	setAlpha(box->useAlpha);
+	doRender = true;
 	isDrawing = false;
-	doClear = boxd->doClear;
+	doClear = true;
 }
 
 bool isDrawing;
 bool doRender;
 bool doClear;
 
+
+void drawline(float x0, float y0, float x1, float y1, char f = '#') {
+	clip(x0, y0);
+	clip(x1, y1);
+	
+	double distance = dist(x0, y0, x1, y1);
+	float angle = atan2(y0 - y1, x0 - x1);
+	
+	float offX = x1;
+	float offY = y1;
+	
+	int x, y;
+	for (double radius = 0.0d; radius < distance; radius += 1.0d) {
+		x = round(offX + radius * cos(angle));
+		y = round(offY + radius * sin(angle));
+		if (x < sizeX && x > -1 && y < sizeY && y > -1)
+			_framebuffer[get(x, y)] = f;
+	}
+}
 bool isAlphaOn() {
 	return useAlpha;
 }
@@ -130,6 +169,12 @@ void clip(int &x, int &y) {
 	y = y > 0 ? y : 0;
 	x = x >= sizeX ? sizeX - 1 : x;
 	y = y >= sizeY ? sizeY - 1 : y;
+}
+void clip(float &x, float &y) {
+	x = x >= 0 ? x : 0;
+	y = y >= 0 ? y : 0;
+	x = x < sizeX ? x : sizeX - 1;
+	y = y < sizeY ? y : sizeY - 1;
 }
 
 void set(std::string& str, int count, int x, int y) {
