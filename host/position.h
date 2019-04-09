@@ -18,6 +18,11 @@ position(position* pos) {
 	this->latitude = pos->latitude;
 	this->altitude = pos->altitude;
 }
+position(position& pos) {
+	this->longitude = pos.longitude;
+	this->latitude = pos.latitude;
+	this->altitude = pos.altitude;
+}
 double longitude;
 double latitude;
 double altitude;

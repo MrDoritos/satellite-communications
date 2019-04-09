@@ -29,8 +29,8 @@ public:
 	char* framebuffer() { return screen->getFramebuffer(); }
 	int get(int x, int y) { return screen->get(x, y); }
 	box* screen;
-protected:
 	playerOrb* player;
+protected:
 	agarioGameMap* gameMap;
 	float positionX;
 	float positionY;
